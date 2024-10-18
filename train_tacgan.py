@@ -14,7 +14,7 @@ import wandb
 wandb_record = None
 
 
-def prepare_results_dir(args):
+def prepare_results_dir(args):#初始化训练和评估的目录结构
     """Makedir, init tensorboard if required, save args."""
     root = args.results_root# os.path.join(args.results_root,
                         #args.data_name, args.target_model)
@@ -42,7 +42,7 @@ def prepare_results_dir(args):
     print(json.dumps(args.__dict__, indent=2))
     return args
 
-def get_wandb(is_wandb, project_id,project='tacgan_same_arch',exp_dir='.'):
+def get_wandb(is_wandb, project_id,project='tacgan_same_arch',exp_dir='.'):#是否启用wandb
     global wandb_record
     
     wandb_record = None
@@ -59,7 +59,7 @@ def get_args():
     parser.add_argument('--eval_batch_size', '-eB', default=None,
                         help='mini-batch size of evaluation data. default: None')
     # Generator configuration
-    parser.add_argument('--gen_num_features', '-gnf', type=int, default=64,
+    parser.add_argument('--gen_num_features', '-gnf', type=int, default=64,#特征图，越大生成器的生成能力越大
                         help='Number of features of generator (a.k.a. nplanes or ngf). default: 64')
     parser.add_argument('--gen_dim_z', '-gdz', type=int, default=128,
                         help='Dimension of generator input noise. default: 128')
