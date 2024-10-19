@@ -174,7 +174,7 @@ def main():
     
     # top1 = 90.08
     # top5 = 95.46
-    top1,top5 = test(target_model, dataloader=test_loader)
+    top1,top5 = test(target_model, dataloader=test_loader)#只能在测试时查看置信度
 
 
     print("Target model {}: top 1 = {}, top 5 = {}".format(args.target_model,top1,top5))
@@ -190,12 +190,12 @@ def main():
         get_wandb(args.is_wandb,project_id, exp_dir = args.results_root)
 
     BCE_loss = torch.nn.BCELoss().cuda()
-    y_real_, y_fake_ = torch.ones(args.batch_size, 1), torch.zeros(args.batch_size, 1)
+    y_real_, y_fake_ = torch.ones(args.batch_size, 1), torch.zeros(args.batch_size, 1)#真实标签是1，假是0
     
     # train G,D without loss_C 
     # if loaded_args_dataset['dataset']['d_pub'] =='celeba' or loaded_args_dataset['dataset']['d_pub'] =='ffhq' :
     #     n_uncond = 1000     
-    if loaded_args_dataset['dataset']['d_pub'] =='facescrub':
+    if loaded_args_dataset['dataset']['d_pub'] =='facescrub':#根据不同数据集设置迭代次数值
         n_uncond = 3000
     elif loaded_args_dataset['dataset']['d_pub'] =='pubfig':
         n_uncond = 6000
@@ -232,9 +232,9 @@ def main():
         # ==================== Beginning of 1 iteration. ====================
         _l_g = .0
         cumulative_inv_loss = 0.
-        cumulative_loss_dis = .0
+        cumulative_loss_dis = .0 #累计损失
         
-        cumulative_gen_acc, cumulative_dis_acc, cumulative_dis_yhat_acc = 0,0,0
+        cumulative_gen_acc, cumulative_dis_acc, cumulative_dis_yhat_acc = 0,0,0#累计准确率
 
         target_correct = 0
         dis_y_correct = 0
@@ -248,10 +248,10 @@ def main():
             alpha = args.alpha
         for i in range(args.n_dis):  # args.ndis=5, Gen update 1 time, Dis update ndis times.
             if i == 0:
-                fake, pseudo_y, _ = sample_from_gen(args, device, args.num_classes, gen,args.batch_size)
+                fake, pseudo_y, _ = sample_from_gen(args, device, args.num_classes, gen,args.batch_size)#假样本和伪标签
                 dis_fake,dis_class = dis(fake)
                 # calc the loss of G
-                loss_gen = BCE_loss(dis_fake, y_real_)
+                loss_gen = BCE_loss(dis_fake, y_real_)#二元交叉熵损失，目标是降低dis_fake的值，y_real_全为1
                 loss_gen_all = loss_gen 
 
                 # calc the loss_c
@@ -268,7 +268,7 @@ def main():
 
                 
             # sample the real images
-            real = sample_from_data_wo_label(device, train_loader)
+            real = sample_from_data_wo_label(device, train_loader)#获取真实样本，用于训练判别器
             
             with torch.no_grad():                
                 # generate fake images
@@ -278,21 +278,21 @@ def main():
                     
                     fake = fake.detach()
                     y_fake = decision(fake, target_model)
-                    y_fake = y_fake.detach()                    
+                    y_fake = y_fake.detach()  #计算fake和yfake，                  
                     
                     ####### eval G
-                    target_correct += y_fake.eq(pseudo_y.view_as(y_fake)).sum().item()
+                    target_correct += y_fake.eq(pseudo_y.view_as(y_fake)).sum().item()#假标签和真标签相等的概率累加
                 
             
 
             # calc the loss of D
-            dis_fake, dis_fake_class = dis(fake)
+            dis_fake, dis_fake_class = dis(fake)#fake：生成器生成的假图像。判别器判别真假和分类
             dis_real, _ = dis(real)
-            loss_fake = BCE_loss(dis_fake, y_fake_)
+            loss_fake = BCE_loss(dis_fake, y_fake_)#两个值相等的时候损失最小
             loss_real = BCE_loss(dis_real, y_real_)
             loss_dis = loss_fake + loss_real
             if n_iter > n_uncond:                
-                loss_c = L.cross_entropy_loss(dis_fake_class, y_fake)                
+                loss_c = L.cross_entropy_loss(dis_fake_class, y_fake)#y_fake：t的输出                
                 loss_dis+= loss_c* alpha
             # update D
             dis.zero_grad()
